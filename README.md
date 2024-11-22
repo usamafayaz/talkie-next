@@ -1,36 +1,66 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Talkie (AI ChatBot)
 
-## Getting Started
+Talkie is a Next.js application that allows users to have conversations with Google's Generative AI (Gemini API).
 
-First, run the development server:
+## Overview
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+Talkie enables users to send messages, upload images for AI-generated descriptions, and enjoy continuous conversational interactions thanks to the AI's memory capabilities.
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Features
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### Conversational AI
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+- **Send Messages**: Users can input messages and send them to the Gemini API.
+- **Receive Responses**: The AI generates conversational responses based on user input.
+- **Memory Retention**: The AI remembers previous messages in the current chat, enabling a continuous and meaningful conversation.
 
-## Learn More
+### Real-time Chat
 
-To learn more about Next.js, take a look at the following resources:
+- **Message Display**: The chat interface displays user messages and AI responses seamlessly.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+### Image Understanding
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+- **Image Upload**: Users can upload images to the AI.
+- **AI Image Description**: The AI provides a detailed description of the content in the uploaded images.
 
-## Deploy on Vercel
+### User Profiles
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+- **Setup Profile**: Users can set up their profile, including their nickname, which personalizes the chat experience.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Technology Stack
+
+- **Framework**: [Next.js](https://nextjs.org/)
+- **API**: [Google Gemini API](https://developers.google.com/generative-ai)
+- **Styling**: [Tailwind CSS](https://tailwindcss.com/)
+- **Animations**: [Framer Motion](https://www.framer.com/motion/)
+- **UI Components**: [Shad CN](https://github.com/shadcn/ui)
+
+### Installation
+
+1. **Clone the repository**:
+   ```bash
+   git clone https://github.com/usamafayaz/talkie-next.git
+   ```
+2. Navigate to the project directory:
+
+   ```bash
+   cd talkie-next
+   ```
+
+3. Install the dependencies:
+
+   ```bash
+   npm install
+   ```
+
+4. Run the development server:
+
+   ```bash
+   npm run dev
+   ```
+
+5. Open your browser and visit `http://localhost:3000` to view the website.
+
+## Contact
+
+For any inquiries or support, please contact [usama.fayyaz157@gmail.com].
