@@ -1,12 +1,19 @@
 "use client";
 import React, { useState, useRef, useEffect } from "react";
 import { GoogleGenerativeAI } from "@google/generative-ai";
-import { ChartPie, ImageIcon, XIcon, SendIcon } from "lucide-react";
+import {
+  ChartPie,
+  ImageIcon,
+  XIcon,
+  SendIcon,
+  ArrowUpIcon,
+} from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
 import ChatMessages from "@/components/custom/ChatMessage";
 import apiKey from "@/utils/geminiKey";
+import Image from "next/image";
+
 const ChatScreen = () => {
-  // State management with precise type definition
   const [messages, setMessages] = useState<
     Array<{
       id: string | number;
@@ -21,11 +28,9 @@ const ChatScreen = () => {
   const [imageBase64, setImageBase64] = useState<string | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
-  const [chat, setChat] = useState<any>(null);
+  const [chatInstance, setChatInstance] = useState<any>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
-
-  // Ref for file input
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Gemini AI initialization
@@ -53,27 +58,21 @@ const ChatScreen = () => {
     adjustTextareaHeight();
   };
 
-  // Initialize chat on component mount
+  // Initialize chat instance
   useEffect(() => {
-    const initChat = model.startChat({
-      history: [],
-      generationConfig: {
-        maxOutputTokens: 2000,
-      },
-    });
-    setChat(initChat);
+    const initializeChat = async () => {
+      const chat = model.startChat({
+        history: [],
+        generationConfig: {
+          maxOutputTokens: 2000,
+        },
+      });
+      setChatInstance(chat);
+    };
 
-    // Add initial greeting
-    setMessages([
-      {
-        id: "initial-greeting",
-        text: "Hello! I'm your AI assistant. How can I help you today?",
-        user: false,
-      },
-    ]);
+    initializeChat();
   }, []);
 
-  // Get greeting message
   const getGreetingMessage = () => {
     const currentHour = new Date().getHours();
     if (currentHour >= 5 && currentHour < 12) {
@@ -85,20 +84,16 @@ const ChatScreen = () => {
     }
   };
 
-  // Image upload handler
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
       setImage(file);
       setImagePreview(URL.createObjectURL(file));
-
-      // Convert image to base64
       const base64 = await convertToBase64(file);
       setImageBase64(base64);
     }
   };
 
-  // Convert file to base64
   const convertToBase64 = (file: File): Promise<string> => {
     return new Promise((resolve, reject) => {
       const reader = new FileReader();
@@ -108,7 +103,6 @@ const ChatScreen = () => {
     });
   };
 
-  // Remove uploaded image
   const removeImage = () => {
     setImage(null);
     setImagePreview(null);
@@ -118,68 +112,61 @@ const ChatScreen = () => {
     }
   };
 
-  // Send message handler
+  // Updated handleSend to use chat history
   const handleSend = async () => {
     if (!input.trim() && !image) return;
+    if (!chatInstance) return;
 
     setIsLoading(true);
 
     try {
-      // Generate a unique ID for the message
       const userMessageId = Date.now();
-      setMessages((prev) => [
-        ...prev,
-        {
-          id: userMessageId,
-          text: input,
-          user: true,
-          ...(imagePreview ? { image: imagePreview } : {}),
-        },
-      ]);
+      const userMessage = {
+        id: userMessageId,
+        text: input,
+        user: true,
+        ...(imagePreview ? { image: imagePreview } : {}),
+      };
 
-      // Prepare the input parts
-      const inputParts: any[] = [input];
+      setMessages((prev) => [...prev, userMessage]);
 
-      // Add image if available
+      // Prepare the input parts for the current message
+      let response;
+      const inputValue = input;
+
       if (imageBase64) {
-        // Extract the base64 data without the MIME type prefix
         const base64Data = imageBase64.split(",")[1];
 
-        // Create a GenerativeAI image part
         const imagePart = {
           inlineData: {
             mimeType: image?.type || "image/jpeg",
             data: base64Data,
           },
         };
-
-        inputParts.push(imagePart);
+        setInput("");
+        removeImage();
+        scrollToBottom();
+        // For messages with images, we'll use generateContent instead of chat
+        const result = await model.generateContent([inputValue, imagePart]);
+        response = await result.response;
+      } else {
+        // For text-only messages, use the chat instance
+        setInput("");
+        const result = await chatInstance.sendMessage(inputValue);
+        response = await result.response;
       }
 
-      // Clear input
-      setInput("");
-      removeImage();
-      scrollToBottom();
+      const aiResponse = {
+        id: userMessageId + 1,
+        text: response.text(),
+        user: false,
+      };
+
+      setMessages((prev) => [...prev, aiResponse]);
+
       if (textareaRef.current) {
         textareaRef.current.style.height = "auto";
       }
-
-      // Send message to Gemini
-      const result = await model.generateContent(inputParts);
-      const response = await result.response;
-      const text = response.text();
-
-      // Add AI response
-      setMessages((prev) => [
-        ...prev,
-        {
-          id: userMessageId + 1,
-          text: text,
-          user: false,
-        },
-      ]);
-
-      // Reset image
     } catch (error) {
       console.error("Error sending message:", error);
       setMessages((prev) => [
@@ -195,7 +182,6 @@ const ChatScreen = () => {
     }
   };
 
-  // Handle key press for sending message
   const handleKeyPress = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
@@ -203,55 +189,78 @@ const ChatScreen = () => {
     }
   };
 
+  // Rest of the component (JSX) remains the same
   return (
-    <div className="flex flex-col h-screen bg-[#0b0c0f] text-white">
-      {/* Header */}
-      {/* <header className="flex items-center justify-between p-4 bg-[#1e2029]">
-        <div className="flex items-center space-x-4">
-          <ChartPie color="#da7758" className="w-10 h-10" />
-          <h1 className="text-2xl md:text-4xl text-white">
-            {getGreetingMessage()}, Usama
-          </h1>
-        </div>
-      </header> */}
-
-      {/* Chat Container */}
-      <div className="flex-grow overflow-y-auto p-4">
-        <ChatMessages messages={messages} isLoading={isLoading} />
+    <div className="flex flex-col h-screen bg-[#2c2b28] text-white relative px-[15vw]">
+      <header className="fixed top-0 left-0 right-0  flex items-center h-12 bg-[#2c2b28] px-4">
+        <h1 className="text-xl font-semibold text-white">Talkie</h1>
+      </header>
+      <div
+        className={`${
+          messages.length === 0 ? "h-1/2" : "flex-grow"
+        } overflow-y-auto p-4 relative scrollbar-hide mt-8`}
+      >
+        {messages.length === 0 ? (
+          <div className="absolute inset-0 flex items-center justify-center">
+            <div className="text-center">
+              <h1 className="text-4xl font-bold mb-4">
+                {getGreetingMessage()}
+              </h1>
+              <p className="text-xl">How can I assist you today?</p>
+            </div>
+          </div>
+        ) : (
+          <ChatMessages messages={messages} isLoading={isLoading} />
+        )}
+        <div ref={messagesEndRef} />
       </div>
 
-      {/* Image Preview */}
       {imagePreview && (
-        <div className="relative p-4 self-end right-12">
-          <img
-            src={imagePreview}
-            alt="Preview"
-            className="h-32 w-32 object-cover rounded-lg"
-          />
-          <button
-            onClick={removeImage}
-            className="absolute top-0 right-0 bg-red-500 rounded-full p-1"
-          >
-            <XIcon color="white" className="w-4 h-4" />
-          </button>
+        <div
+          className={`relative z-10 p-4 h-40 w-[65vw] self-center overflow-hidden bg-[#282623] rounded-t-3xl border border-[#383933] border-opacity-10 ${
+            messages.length !== 0 && "bottom-[17vh]"
+          }`}
+        >
+          <div className="relative h-full w-44">
+            <Image
+              src={imagePreview}
+              alt="Preview"
+              className="object-cover h-full w-full rounded-lg border border-gray-400"
+              fill
+              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+            />
+            <button
+              onClick={removeImage}
+              className="absolute top-2 left-2 hover:bg-red-500 bg-[#3a3a38] rounded-full p-1 transition-colors duration-200"
+            >
+              <XIcon color="white" className="w-3 h-3" />
+            </button>
+          </div>
         </div>
       )}
 
-      <div className="absolute bottom-0 p-4 bg-[#1e2029] flex items-center space-x-2 w-[70vw] self-center rounded-t-3xl">
+      <div
+        className={`
+          ${
+            messages.length === 0
+              ? "relative mx-auto w-[70vw] mb-32 rounded-3xl"
+              : "absolute bottom-0 w-[70vw] left-1/2 transform -translate-x-1/2 rounded-t-3xl"
+          }
+          p-4 bg-[#393937] flex items-center space-x-2 border border-[#454640] border-opacity-10
+        `}
+      >
         <div className="flex-grow relative rounded-lg">
           <Textarea
             ref={textareaRef}
             value={input}
             onChange={handleInputChange}
             onKeyDown={handleKeyPress}
-            placeholder="Message..."
-            className="pr-10 text-white bg-[#1e2029] min-h-[50px] max-h-32 w-full scrollbar-hide resize-none"
+            placeholder="Ask Anything..."
+            className="pr-10 text-white bg-[#393937] w-full resize-none placeholder-gray-400 focus:outline-none scrollbar-hide"
           />
-
-          {/* Image Upload - Positioned inside input */}
           <label
             htmlFor="image-upload"
-            className="absolute right-2 top-1/2 transform -translate-y-1/2 cursor-pointer hover:bg-gray-700 p-2 rounded-full"
+            className="absolute right-2 top-1/2 transform -translate-y-1/2 cursor-pointer hover:bg-[#2c2b28] p-2 rounded-full transition-colors"
           >
             <ImageIcon color="gray" className="w-5 h-5" />
             <input
@@ -264,22 +273,22 @@ const ChatScreen = () => {
             />
           </label>
         </div>
-
-        {/* Send Button */}
-        <button
-          onClick={handleSend}
-          disabled={isLoading || (!input.trim() && !image)}
-          className={`
-            p-2 rounded-full 
+        {(input.trim() || image) && (
+          <button
+            onClick={handleSend}
+            disabled={isLoading || (!input.trim() && !image)}
+            className={`
+            p-2 rounded-xl transition-colors
             ${
               isLoading || (!input.trim() && !image)
                 ? "bg-gray-500 cursor-not-allowed"
-                : "bg-[#444653] hover:bg-[#565869]"
+                : "bg-[#ae562f] hover:bg-[#b1562e]"
             }
           `}
-        >
-          <SendIcon color="white" className="w-5 h-5" />
-        </button>
+          >
+            <ArrowUpIcon color="white" className="w-5 h-5" />
+          </button>
+        )}
       </div>
     </div>
   );

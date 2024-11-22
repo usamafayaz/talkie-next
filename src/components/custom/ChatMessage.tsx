@@ -140,20 +140,21 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({ messages, isLoading }) => {
           className={`flex ${message.user ? "justify-end" : "justify-start"}`}
         >
           <div
-            className={`max-w-[80%] p-4 rounded-lg shadow-sm ${
+            className={`max-w-[80%] px-6 py-4 rounded-2xl shadow-sm ${
               message.user
-                ? "bg-gray-800 text-white"
-                : "bg-gray-700 text-gray-400 border border-gray-600"
+                ? "bg-[#22211d] text-white"
+                : "bg-[#363632] text-gray-400"
             }`}
           >
             {message.image && (
-              <div className="h-72 w-72 overflow-hidden mb-2 rounded-md">
+              <div className="relative w-60 h-60 mb-3 rounded-xl border border-gray-700/30">
                 <Image
-                  height={300}
-                  width={300}
                   src={message.image}
                   alt="Message image"
-                  className="rounded-md mb-4"
+                  className="rounded-xl object-cover hover:scale-105 transition-transform duration-300"
+                  fill
+                  sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                  priority
                 />
               </div>
             )}
@@ -166,7 +167,7 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({ messages, isLoading }) => {
 
       {isLoading && (
         <div className="flex justify-start">
-          <div className="bg-gray-700 p-4 rounded-xl shadow-sm border border-gray-600">
+          <div className="bg-[#363632] py-4 px-8 rounded-xl shadow-sm">
             <div className="animate-spin rounded-full h-6 w-6 border-2 border-gray-500 border-t-gray-300" />
           </div>
         </div>
