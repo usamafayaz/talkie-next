@@ -65,7 +65,7 @@ const ChatInput: React.FC<ChatInputProps> = ({
       {imagePreview && (
         <div
           className={`
-            relative z-10 p-4 h-40 w-[65vw] self-center overflow-hidden 
+            relative z-10 p-4 md:h-40 h-24 md:w-[65vw] w-[75vw] self-center overflow-hidden 
             bg-[#282623] rounded-t-3xl border border-[#383933] 
             border-opacity-10 
             ${messagesExist ? "bottom-[17vh]" : ""}
@@ -93,10 +93,10 @@ const ChatInput: React.FC<ChatInputProps> = ({
         className={`
           ${
             messagesExist
-              ? "absolute bottom-0 w-[70vw] left-1/2 transform -translate-x-1/2 rounded-t-3xl"
-              : "relative mx-auto w-[70vw] mb-32 rounded-3xl"
+              ? "absolute bottom-0 left-1/2 transform -translate-x-1/2 rounded-t-3xl px-4 pt-4"
+              : "relative mx-auto mb-32 rounded-3xl p-4"
           }
-          p-4 bg-[#393937] flex items-center space-x-2 border border-[#454640] border-opacity-10
+           bg-[#393937] md:w-[70vw] w-[85vw] flex items-center space-x-2 border border-[#454640] border-opacity-10
         `}
       >
         <div className="flex-grow relative rounded-lg">

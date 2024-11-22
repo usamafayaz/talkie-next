@@ -16,7 +16,7 @@ const ChatScreen = () => {
   };
 
   return (
-    <div className="flex flex-col h-screen bg-[#2c2b28] text-white relative px-[15vw]">
+    <div className="flex flex-col h-screen bg-[#2c2b28] text-white relative md:px-[15vw]">
       <Header />
       <div
         className={`flex-grow overflow-y-auto p-4 relative scrollbar-hide mt-8`}
