@@ -203,7 +203,7 @@ const ChatInput: React.FC<ChatInputProps> = ({
           variants={buttonVariant}
           initial={"hidden"}
           animate={"visible"}
-          className="fixed bottom-20 flex space-x-4 self-center"
+          className="fixed bottom-20 hidden md:flex space-x-4 self-center"
         >
           {buttons.map((button, index) => (
             <button
