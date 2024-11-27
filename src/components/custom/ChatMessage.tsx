@@ -50,10 +50,7 @@ const ImageModal: React.FC<{
   );
 };
 
-const FormattedText: React.FC<{ text: string; isUser: boolean }> = ({
-  text,
-  isUser,
-}) => {
+const FormattedText: React.FC<{ text: string }> = ({ text }) => {
   const lines = text.split("\n");
   let inCodeBlock = false;
   let codeContent = "";
@@ -200,9 +197,7 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({ messages, isLoading }) => {
                   />
                 </div>
               )}
-              {message.text && (
-                <FormattedText text={message.text} isUser={message.user} />
-              )}
+              {message.text && <FormattedText text={message.text} />}
             </div>
           </div>
         ))}
