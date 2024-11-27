@@ -4,6 +4,9 @@ import { GoogleGenerativeAI } from "@google/generative-ai";
 import { convertToBase64 } from "@/utils/helpers";
 
 const api = process.env.NEXT_PUBLIC_APIKEY;
+if (!api) {
+  console.error("API Key is missing");
+}
 
 const genAI = new GoogleGenerativeAI(api || "");
 const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
