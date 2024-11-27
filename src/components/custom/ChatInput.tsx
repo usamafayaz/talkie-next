@@ -1,8 +1,18 @@
 import React, { useState, useRef } from "react";
 import { Textarea } from "@/components/ui/textarea";
-import { ImageIcon, XIcon, ArrowUpIcon } from "lucide-react";
+import {
+  XIcon,
+  ArrowUpIcon,
+  PaperclipIcon,
+  ImageUpIcon,
+  Gift,
+  Text,
+  GraduationCap,
+  Lightbulb,
+} from "lucide-react";
 import Image from "next/image";
 import { ChatInputProps } from "@/utils/types";
+import { motion } from "framer-motion";
 
 const ChatInput: React.FC<ChatInputProps> = ({
   onSend,
@@ -12,9 +22,13 @@ const ChatInput: React.FC<ChatInputProps> = ({
   const [input, setInput] = useState("");
   const [image, setImage] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [showTooltip, setShowTooltip] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
-
+  const buttonVariant = {
+    hidden: { opacity: 0, y: 10 },
+    visible: { opacity: 1, y: 0, transition: { duration: 0.5 } },
+  };
   const adjustTextareaHeight = () => {
     const textarea = textareaRef.current;
     if (textarea) {
@@ -22,6 +36,39 @@ const ChatInput: React.FC<ChatInputProps> = ({
       textarea.style.height = `${Math.min(textarea.scrollHeight, 200)}px`;
     }
   };
+
+  const buttons = [
+    {
+      label: "Analyze images",
+      icon: ImageUpIcon,
+      color: "text-green-500",
+      textInput: "Help me analyze this image ",
+    },
+    {
+      label: "Summarize text",
+      icon: Text,
+      color: "text-orange-500",
+      textInput: "Summarize ",
+    },
+    {
+      label: "Surprise me",
+      icon: Gift,
+      color: "text-blue-500",
+      textInput: "Surprise me ",
+    },
+    {
+      label: "Brainstorm",
+      icon: Lightbulb,
+      color: "text-yellow-500",
+      textInput: "Brainstorm ideas ",
+    },
+    {
+      label: "Get advice",
+      icon: GraduationCap,
+      color: "text-blue-400",
+      textInput: "Get advice ",
+    },
+  ];
 
   const handleInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     setInput(e.target.value);
@@ -94,7 +141,7 @@ const ChatInput: React.FC<ChatInputProps> = ({
           ${
             messagesExist
               ? "absolute bottom-0 left-1/2 transform -translate-x-1/2 rounded-t-3xl px-4 pt-4"
-              : "relative mx-auto mb-32 rounded-3xl p-4"
+              : "relative mx-auto mb-36 rounded-3xl p-4"
           }
            bg-[#393937] md:w-[70vw] w-[85vw] flex items-center space-x-2 border border-[#454640] border-opacity-10
         `}
@@ -106,13 +153,13 @@ const ChatInput: React.FC<ChatInputProps> = ({
             onChange={handleInputChange}
             onKeyDown={handleKeyPress}
             placeholder="Ask Anything..."
-            className="pr-10 text-white bg-[#393937] w-full resize-none placeholder-gray-400 focus:outline-none scrollbar-hide"
+            className="pr-10 text-white bg-[#393937] w-full resize-none placeholder-gray-400 focus:outline-none scrollbar-hide "
           />
           <label
             htmlFor="image-upload"
-            className="absolute right-2 top-1/2 transform -translate-y-1/2 cursor-pointer hover:bg-[#2c2b28] p-2 rounded-full transition-colors"
+            className="absolute right-2 top-1/2 transform -translate-y-1/2 cursor-pointer hover:bg-[#2c2b28] p-2 rounded-xl transition-colors"
           >
-            <ImageIcon color="gray" className="w-5 h-5" />
+            <PaperclipIcon color="gray" className="w-5 h-5" />
             <input
               type="file"
               id="image-upload"
@@ -123,7 +170,11 @@ const ChatInput: React.FC<ChatInputProps> = ({
             />
           </label>
         </div>
-        {(input.trim() || image) && (
+        <div
+          onMouseEnter={() => setShowTooltip(true)}
+          onMouseLeave={() => setShowTooltip(false)}
+          className="relative"
+        >
           <button
             onClick={handleSend}
             disabled={isLoading || (!input.trim() && !image)}
@@ -131,15 +182,48 @@ const ChatInput: React.FC<ChatInputProps> = ({
               p-2 rounded-xl transition-colors
               ${
                 isLoading || (!input.trim() && !image)
-                  ? "bg-gray-500 cursor-not-allowed"
-                  : "bg-[#ae562f] hover:bg-[#b1562e]"
+                  ? "bg-gray-500"
+                  : "bg-[#ae562f] hover:bg-[#a84b23]"
               }
             `}
           >
             <ArrowUpIcon color="white" className="w-5 h-5" />
           </button>
-        )}
+          {showTooltip && (
+            <div className="flex items-center justify-center absolute w-32 h-8 -top-10 left-1/2 transform -translate-x-1/2 px-2 py-1 bg-black text-white text-xs rounded-md shadow-lg">
+              {isLoading || (!input.trim() && !image)
+                ? "Message is empty"
+                : "Send message"}
+            </div>
+          )}
+        </div>
       </div>
+      {!messagesExist && (
+        <motion.div
+          variants={buttonVariant}
+          initial={"hidden"}
+          animate={"visible"}
+          className="fixed bottom-20 flex space-x-4 self-center"
+        >
+          {buttons.map((button, index) => (
+            <button
+              onClick={() => {
+                setInput(button.textInput);
+                textareaRef.current?.focus();
+              }}
+              key={index}
+              className="flex items-center px-4 py-2 bg-[#393937] rounded-lg hover:bg-[#21211e] transition focus:outline-none"
+            >
+              <span className="flex items-center">
+                <button.icon className={`w-5 h-5 mr-2 ${button.color}`} />
+              </span>
+              <span className="text-white text-sm font-thin">
+                {button.label}
+              </span>
+            </button>
+          ))}
+        </motion.div>
+      )}
     </>
   );
 };

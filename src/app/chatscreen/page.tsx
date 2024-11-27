@@ -6,7 +6,7 @@ import ChatInput from "@/components/custom/ChatInput";
 import Header from "@/components/custom/Header";
 import ChatMessages from "@/components/custom/ChatMessage";
 import { motion } from "framer-motion";
-
+import { ImageIcon, Gift, Text, GraduationCap, Lightbulb } from "lucide-react";
 const ChatScreen = () => {
   const { messages, isLoading, sendMessage } = useChat();
 

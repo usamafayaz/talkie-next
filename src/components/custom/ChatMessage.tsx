@@ -1,5 +1,5 @@
-import React from "react";
-import { Copy } from "lucide-react";
+import React, { useState } from "react";
+import { Copy, X } from "lucide-react";
 import Image from "next/image";
 
 interface Message {
@@ -13,6 +13,42 @@ interface ChatMessagesProps {
   messages: Message[];
   isLoading?: boolean;
 }
+
+// Image Modal Component
+const ImageModal: React.FC<{
+  imageSrc: string;
+  isOpen: boolean;
+  onClose: () => void;
+}> = ({ imageSrc, isOpen, onClose }) => {
+  if (!isOpen) return null;
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/80"
+      onClick={onClose}
+    >
+      <div className="relative max-w-[90vw] max-h-[90vh]">
+        <button
+          onClick={onClose}
+          className="absolute -top-10 right-0 p-2 text-white hover:text-gray-300"
+        >
+          <X size={24} />
+        </button>
+        <div className="relative w-full h-full min-h-[300px] min-w-[700px]">
+          <Image
+            src={imageSrc}
+            alt="Enlarged message image"
+            className="rounded-lg object-contain"
+            fill
+            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+            priority
+            onClick={(e) => e.stopPropagation()}
+          />
+        </div>
+      </div>
+    </div>
+  );
+};
 
 const FormattedText: React.FC<{ text: string; isUser: boolean }> = ({
   text,
@@ -132,47 +168,60 @@ const FormattedText: React.FC<{ text: string; isUser: boolean }> = ({
 };
 
 const ChatMessages: React.FC<ChatMessagesProps> = ({ messages, isLoading }) => {
-  return (
-    <div className="space-y-4 pb-24">
-      {messages.map((message) => (
-        <div
-          key={message.id}
-          className={`flex ${message.user ? "justify-end" : "justify-start"}`}
-        >
-          <div
-            className={`max-w-[80%] px-6 py-4 rounded-2xl shadow-sm ${
-              message.user
-                ? "bg-[#22211d] text-white"
-                : "bg-[#363632] text-gray-400"
-            }`}
-          >
-            {message.image && (
-              <div className="relative w-60 h-60 mb-3 rounded-xl border border-gray-700/30">
-                <Image
-                  src={message.image}
-                  alt="Message image"
-                  className="rounded-xl object-cover hover:scale-105 transition-transform duration-300"
-                  fill
-                  sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                  priority
-                />
-              </div>
-            )}
-            {message.text && (
-              <FormattedText text={message.text} isUser={message.user} />
-            )}
-          </div>
-        </div>
-      ))}
+  const [selectedImage, setSelectedImage] = useState<any>(null);
 
-      {isLoading && (
-        <div className="flex justify-start">
-          <div className="bg-[#363632] py-4 px-8 rounded-xl shadow-sm">
-            <div className="animate-spin rounded-full h-6 w-6 border-2 border-gray-500 border-t-gray-300" />
+  return (
+    <>
+      <div className="space-y-4 pb-24">
+        {messages.map((message) => (
+          <div
+            key={message.id}
+            className={`flex ${message.user ? "justify-end" : "justify-start"}`}
+          >
+            <div
+              className={`max-w-[80%] px-6 py-4 rounded-2xl shadow-sm ${
+                message.user
+                  ? "bg-[#22211d] text-white"
+                  : "bg-[#363632] text-gray-400"
+              }`}
+            >
+              {message.image && (
+                <div
+                  className="relative w-60 h-60 mb-3 rounded-xl border border-gray-700/30 cursor-pointer"
+                  onClick={() => setSelectedImage(message.image)}
+                >
+                  <Image
+                    src={message.image}
+                    alt="Message image"
+                    className="rounded-xl object-cover hover:scale-105 transition-transform duration-300"
+                    fill
+                    sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                    priority
+                  />
+                </div>
+              )}
+              {message.text && (
+                <FormattedText text={message.text} isUser={message.user} />
+              )}
+            </div>
           </div>
-        </div>
-      )}
-    </div>
+        ))}
+
+        {isLoading && (
+          <div className="flex justify-start">
+            <div className="bg-[#363632] py-4 px-8 rounded-xl shadow-sm">
+              <div className="animate-spin rounded-full h-6 w-6 border-2 border-gray-500 border-t-gray-300" />
+            </div>
+          </div>
+        )}
+      </div>
+
+      <ImageModal
+        imageSrc={selectedImage || ""}
+        isOpen={!!selectedImage}
+        onClose={() => setSelectedImage(null)}
+      />
+    </>
   );
 };
 

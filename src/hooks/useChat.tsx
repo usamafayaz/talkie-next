@@ -2,9 +2,10 @@ import { useState, useEffect } from "react";
 import { Message } from "@/utils/types";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { convertToBase64 } from "@/utils/helpers";
-import apiKey from "@/utils/geminiKey";
 
-const genAI = new GoogleGenerativeAI(apiKey);
+const api = process.env.APIKEY;
+
+const genAI = new GoogleGenerativeAI(api || "");
 const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 
 export const useChat = () => {
