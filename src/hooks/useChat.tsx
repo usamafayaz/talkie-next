@@ -3,7 +3,7 @@ import { Message } from "@/utils/types";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { convertToBase64 } from "@/utils/helpers";
 
-const api = process.env.APIKEY;
+const api = process.env.NEXT_PUBLIC_APIKEY;
 
 const genAI = new GoogleGenerativeAI(api || "");
 const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
