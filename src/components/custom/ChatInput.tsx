@@ -98,6 +98,7 @@ const ChatInput: React.FC<ChatInputProps> = ({
     if (textareaRef.current) {
       textareaRef.current.style.height = "auto";
     }
+    setShowTooltip(false);
   };
 
   const handleKeyPress = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
@@ -115,7 +116,7 @@ const ChatInput: React.FC<ChatInputProps> = ({
             relative z-10 p-4 md:h-40 h-24 md:w-[65vw] w-[75vw] self-center overflow-hidden 
             bg-[#282623] rounded-t-3xl border border-[#383933] 
             border-opacity-10 
-            ${messagesExist ? "bottom-[17vh]" : ""}
+            ${messagesExist ? "bottom-[11vh] md:bottom-[14vh]" : ""}
           `}
         >
           <div className="relative h-full w-44">
