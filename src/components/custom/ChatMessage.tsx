@@ -1,6 +1,10 @@
 import React, { useState } from "react";
-import { Copy, X } from "lucide-react";
+import { Copy, X, Check } from "lucide-react";
 import Image from "next/image";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
+import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
+import { atomDark } from "react-syntax-highlighter/dist/cjs/styles/prism";
 
 interface Message {
   id: string | number;
@@ -14,7 +18,6 @@ interface ChatMessagesProps {
   isLoading?: boolean;
 }
 
-// Image Modal Component
 const ImageModal: React.FC<{
   imageSrc: string;
   isOpen: boolean;
@@ -24,23 +27,23 @@ const ImageModal: React.FC<{
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 backdrop-blur-sm p-4 animate-in fade-in duration-300"
       onClick={onClose}
     >
-      <div className="flex items-center justify-center p-4 relative max-w-[90vw] max-h-[90vh]">
+      <div className="relative max-w-[95vw] max-h-[95vh] flex items-center justify-center">
         <button
           onClick={onClose}
-          className="absolute -top-10 right-0 p-2 text-white hover:text-gray-300"
+          className="absolute -top-12 right-0 p-2 text-white/70 hover:text-white transition-colors"
         >
-          <X size={24} />
+          <X size={28} />
         </button>
-        <div className="relative w-full h-full md:min-h-[300px] md:min-w-[700px] min-h-[300px] min-w-[700px] rounded-lg overflow-hidden">
+        <div className="relative w-full h-full min-h-[50vh] min-w-[70vw]">
           <Image
             src={imageSrc}
-            alt="Enlarged message image"
-            className="rounded-lg object-contain"
+            alt="Enlarged"
+            className="rounded-xl object-contain shadow-2xl"
             fill
-            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+            sizes="90vw"
             priority
             onClick={(e) => e.stopPropagation()}
           />
@@ -50,173 +53,115 @@ const ImageModal: React.FC<{
   );
 };
 
-const FormattedText: React.FC<{ text: string }> = ({ text }) => {
-  const lines = text.split("\n");
-  let inCodeBlock = false;
-  let codeContent = "";
+const CodeBlock = ({ language, value }: { language: string; value: string }) => {
+  const [copied, setCopied] = useState(false);
+
+  const handleCopy = () => {
+    navigator.clipboard.writeText(value);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
 
   return (
-    <div className="space-y-2">
-      {lines.map((line, lineIndex) => {
-        // Check for numbered headings
-        const numberedHeadingMatch = line.match(/^(\d+\.) \*\*(.*?)\*\*/);
-        if (numberedHeadingMatch) {
-          const [, number, headingText] = numberedHeadingMatch;
-          return (
-            <div
-              key={lineIndex}
-              className={`text-lg font-bold text-white mb-2`}
-            >
-              {number} {headingText}
-            </div>
-          );
-        }
-
-        // Handle code blocks
-        if (line.trim() === "```") {
-          if (inCodeBlock) {
-            const content = codeContent;
-            codeContent = "";
-            inCodeBlock = false;
-            return (
-              <div
-                key={lineIndex}
-                className="relative bg-gray-800 rounded-md p-4 mb-2 group"
-              >
-                <pre
-                  className={
-                    "text-sm font-mono whitespace-pre-wrap overflow-x-auto text-white"
-                  }
-                >
-                  {content}
-                </pre>
-                <button
-                  onClick={() => navigator.clipboard.writeText(content)}
-                  className="absolute top-2 right-2 p-1.5 rounded-lg bg-gray-700 shadow-sm opacity-0 group-hover:opacity-100 transition-opacity"
-                >
-                  <Copy size={16} color="white" />
-                </button>
-              </div>
-            );
-          } else {
-            inCodeBlock = true;
-            return null;
-          }
-        }
-
-        if (inCodeBlock) {
-          codeContent += line + "\n";
-          return null;
-        }
-
-        // Handle other formatting
-        const parts = line.split(/(\*\*\*.*?\*\*\*|\*\*.*?\*\*|\*.*?\*)/);
-
-        return (
-          <div key={lineIndex} className="space-y-1">
-            {parts
-              .filter((part) => part.trim())
-              .map((part, partIndex) => {
-                part = part.trim();
-
-                if (part.startsWith("***") && part.endsWith("***")) {
-                  return (
-                    <span
-                      key={`${lineIndex}-${partIndex}`}
-                      className={`text-xl font-bold text-white block`}
-                    >
-                      {part.slice(3, -3).trim()}
-                    </span>
-                  );
-                } else if (part.startsWith("**") && part.endsWith("**")) {
-                  return (
-                    <span
-                      key={`${lineIndex}-${partIndex}`}
-                      className={`text-lg font-bold block text-white`}
-                    >
-                      {part.slice(2, -2).trim()}
-                    </span>
-                  );
-                } else if (part.startsWith("*") && part.endsWith("*")) {
-                  return (
-                    <span
-                      key={`${lineIndex}-${partIndex}`}
-                      className={"italic text-white"}
-                    >
-                      {part.slice(1, -1).trim()}
-                    </span>
-                  );
-                } else {
-                  return (
-                    <span
-                      key={`${lineIndex}-${partIndex}`}
-                      className={"text-white"}
-                    >
-                      {part}
-                    </span>
-                  );
-                }
-              })}
-          </div>
-        );
-      })}
+    <div className="relative group my-4 rounded-lg overflow-hidden border border-white/10 shadow-lg">
+      <div className="flex items-center justify-between px-4 py-2 bg-[#1e1e1e] border-b border-white/5">
+        <span className="text-xs font-mono text-gray-400 uppercase">{language || "code"}</span>
+        <button
+          onClick={handleCopy}
+          className="p-1.5 rounded-md hover:bg-white/5 transition-colors text-gray-400 hover:text-white"
+        >
+          {copied ? <Check size={14} className="text-green-500" /> : <Copy size={14} />}
+        </button>
+      </div>
+      <SyntaxHighlighter
+        language={language || "javascript"}
+        style={atomDark}
+        customStyle={{
+          margin: 0,
+          padding: "1rem",
+          fontSize: "0.875rem",
+          background: "transparent",
+        }}
+      >
+        {value}
+      </SyntaxHighlighter>
     </div>
   );
 };
 
 const ChatMessages: React.FC<ChatMessagesProps> = ({ messages, isLoading }) => {
-  const [selectedImage, setSelectedImage] = useState<any>(null);
+  const [selectedImage, setSelectedImage] = useState<string | null>(null);
 
   return (
-    <>
-      <div className="space-y-4 pb-24">
-        {messages.map((message) => (
+    <div className="space-y-6 pb-32">
+      {messages.map((message) => (
+        <div
+          key={message.id}
+          className={`flex w-full ${message.user ? "justify-end" : "justify-start"}`}
+        >
           <div
-            key={message.id}
-            className={`flex ${message.user ? "justify-end" : "justify-start"}`}
-          >
-            <div
-              className={`max-w-[80%] px-6 py-4 rounded-2xl shadow-sm ${
-                message.user
-                  ? "bg-[#22211d] text-white"
-                  : "bg-[#363632] text-gray-400"
+            className={`max-w-[85%] md:max-w-[75%] px-5 py-3 transition-all duration-300 ${message.user ? "chat-bubble-user" : "chat-bubble-ai"
               }`}
-            >
-              {message.image && (
-                <div
-                  className="relative w-60 h-60 mb-3 rounded-xl border border-gray-700/30 cursor-pointer"
-                  onClick={() => setSelectedImage(message.image)}
-                >
-                  <Image
-                    src={message.image}
-                    alt="Message image"
-                    className="rounded-xl object-cover hover:scale-105 transition-transform duration-300"
-                    fill
-                    sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                    priority
-                  />
-                </div>
-              )}
-              {message.text && <FormattedText text={message.text} />}
+          >
+            {message.image && (
+              <div
+                className="relative w-full max-w-sm aspect-square mb-3 rounded-lg overflow-hidden border border-white/10 cursor-zoom-in"
+                onClick={() => setSelectedImage(message.image as string)}
+              >
+                <Image
+                  src={message.image}
+                  alt="Message image"
+                  className="object-cover hover:scale-105 transition-transform duration-500"
+                  fill
+                  sizes="(max-width: 768px) 100vw, 400px"
+                  priority
+                />
+              </div>
+            )}
+            <div className="prose prose-invert max-w-none prose-p:leading-relaxed prose-pre:p-0">
+              <ReactMarkdown
+                remarkPlugins={[remarkGfm]}
+                components={{
+                  code({ node, inline, className, children, ...props }: any) {
+                    const match = /language-(\w+)/.exec(className || "");
+                    return !inline && match ? (
+                      <CodeBlock
+                        language={match[1]}
+                        value={String(children).replace(/\n$/, "")}
+                      />
+                    ) : (
+                      <code className="bg-white/10 px-1.5 py-0.5 rounded text-sm" {...props}>
+                        {children}
+                      </code>
+                    );
+                  },
+                }}
+              >
+                {message.text || ""}
+              </ReactMarkdown>
             </div>
           </div>
-        ))}
+        </div>
+      ))}
 
-        {isLoading && (
-          <div className="flex justify-start">
-            <div className="bg-[#363632] py-4 px-8 rounded-xl shadow-sm">
-              <div className="animate-spin rounded-full h-6 w-6 border-2 border-gray-500 border-t-gray-300" />
+      {isLoading && (
+        <div className="flex justify-start">
+          <div className="bg-[#2c2b28] py-4 px-6 rounded-2xl border border-white/5 shadow-md flex items-center space-x-2">
+            <div className="flex space-x-1">
+              <div className="w-2 h-2 bg-gray-500 rounded-full animate-bounce [animation-delay:-0.3s]" />
+              <div className="w-2 h-2 bg-gray-500 rounded-full animate-bounce [animation-delay:-0.15s]" />
+              <div className="w-2 h-2 bg-gray-500 rounded-full animate-bounce" />
             </div>
           </div>
-        )}
-      </div>
+        </div>
+      )}
 
       <ImageModal
         imageSrc={selectedImage || ""}
         isOpen={!!selectedImage}
         onClose={() => setSelectedImage(null)}
       />
-    </>
+    </div>
   );
 };
 

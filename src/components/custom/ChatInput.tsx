@@ -1,4 +1,4 @@
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { Textarea } from "@/components/ui/textarea";
 import {
   XIcon,
@@ -12,7 +12,7 @@ import {
 } from "lucide-react";
 import Image from "next/image";
 import { ChatInputProps } from "@/utils/types";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 
 const ChatInput: React.FC<ChatInputProps> = ({
   onSend,
@@ -22,13 +22,9 @@ const ChatInput: React.FC<ChatInputProps> = ({
   const [input, setInput] = useState("");
   const [image, setImage] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
-  const [showTooltip, setShowTooltip] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const buttonVariant = {
-    hidden: { opacity: 0, y: 10 },
-    visible: { opacity: 1, y: 0, transition: { duration: 0.5 } },
-  };
+
   const adjustTextareaHeight = () => {
     const textarea = textareaRef.current;
     if (textarea) {
@@ -37,37 +33,11 @@ const ChatInput: React.FC<ChatInputProps> = ({
     }
   };
 
-  const buttons = [
-    {
-      label: "Analyze images",
-      icon: ImageUpIcon,
-      color: "text-green-500",
-      textInput: "Help me analyze this image ",
-    },
-    {
-      label: "Summarize text",
-      icon: Text,
-      color: "text-orange-500",
-      textInput: "Summarize ",
-    },
-    {
-      label: "Surprise me",
-      icon: Gift,
-      color: "text-blue-500",
-      textInput: "Surprise me ",
-    },
-    {
-      label: "Brainstorm",
-      icon: Lightbulb,
-      color: "text-yellow-500",
-      textInput: "Brainstorm ideas ",
-    },
-    {
-      label: "Get advice",
-      icon: GraduationCap,
-      color: "text-blue-400",
-      textInput: "Get advice ",
-    },
+  const prompts = [
+    { label: "Analyze image", icon: ImageUpIcon, color: "text-emerald-400", prompt: "Help me analyze this image" },
+    { label: "Summarize", icon: Text, color: "text-orange-400", prompt: "Summarize the following text:" },
+    { label: "Brainstorm", icon: Lightbulb, color: "text-amber-400", prompt: "Let's brainstorm some ideas for" },
+    { label: "Advice", icon: GraduationCap, color: "text-indigo-400", prompt: "I need some advice on" },
   ];
 
   const handleInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
@@ -92,13 +62,13 @@ const ChatInput: React.FC<ChatInputProps> = ({
   };
 
   const handleSend = () => {
+    if ((!input.trim() && !image) || isLoading) return;
     onSend(input, image);
     setInput("");
     removeImage();
     if (textareaRef.current) {
       textareaRef.current.style.height = "auto";
     }
-    setShowTooltip(false);
   };
 
   const handleKeyPress = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
@@ -109,123 +79,95 @@ const ChatInput: React.FC<ChatInputProps> = ({
   };
 
   return (
-    <>
-      {imagePreview && (
-        <div
-          className={`
-            relative z-10 p-4 md:h-40 h-24 md:w-[65vw] w-[75vw] self-center overflow-hidden 
-            bg-[#282623] rounded-t-3xl border border-[#383933] 
-            border-opacity-10 
-            ${messagesExist ? "bottom-[11vh] md:bottom-[14vh]" : ""}
-          `}
-        >
-          <div className="relative h-full w-44">
-            <Image
-              src={imagePreview}
-              alt="Preview"
-              className="object-cover h-full w-full rounded-lg border border-gray-400"
-              fill
-              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-            />
-            <button
-              onClick={removeImage}
-              className="absolute top-2 left-2 hover:bg-red-500 bg-[#3a3a38] rounded-full p-1 transition-colors duration-200"
+    <div className={`fixed bottom-0 left-0 right-0 p-4 md:p-8 flex flex-col items-center pointer-events-none`}>
+      <div className="w-full max-w-4xl pointer-events-auto">
+        <AnimatePresence>
+          {imagePreview && (
+            <motion.div
+              initial={{ opacity: 0, y: 20, scale: 0.95 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: 20, scale: 0.95 }}
+              className="mb-4 ml-4"
             >
-              <XIcon color="white" className="w-3 h-3" />
-            </button>
-          </div>
-        </div>
-      )}
+              <div className="relative w-32 h-32 glass rounded-2xl overflow-hidden group border border-white/20">
+                <Image
+                  src={imagePreview}
+                  alt="Preview"
+                  className="object-cover"
+                  fill
+                />
+                <button
+                  onClick={removeImage}
+                  className="absolute top-1 right-1 p-1 bg-black/60 hover:bg-red-500/80 rounded-full transition-colors backdrop-blur-md"
+                >
+                  <XIcon className="w-4 h-4 text-white" />
+                </button>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
-      <div
-        className={`
-          ${
-            messagesExist
-              ? "absolute bottom-0 left-1/2 transform -translate-x-1/2 rounded-t-3xl px-4 pt-4"
-              : "relative mx-auto mb-36 rounded-3xl p-4"
-          }
-           bg-[#393937] md:w-[70vw] w-[85vw] flex items-center space-x-2 border border-[#454640] border-opacity-10
-        `}
-      >
-        <div className="flex-grow relative rounded-lg">
-          <Textarea
-            ref={textareaRef}
-            value={input}
-            onChange={handleInputChange}
-            onKeyDown={handleKeyPress}
-            placeholder="Ask Anything..."
-            className="pr-10 text-white bg-[#393937] w-full resize-none placeholder-gray-400 focus:outline-none scrollbar-hide "
-          />
-          <label
-            htmlFor="image-upload"
-            className="absolute right-2 top-1/2 transform -translate-y-1/2 cursor-pointer hover:bg-[#2c2b28] p-2 rounded-xl transition-colors"
-          >
-            <PaperclipIcon color="gray" className="w-5 h-5" />
-            <input
-              type="file"
-              id="image-upload"
-              ref={fileInputRef}
-              accept="image/*"
-              className="hidden"
-              onChange={handleImageUpload}
+        <div className="input-container p-2 flex items-end space-x-2">
+          <div className="flex-grow relative flex items-center">
+            <label className="p-3 cursor-pointer hover:bg-white/5 rounded-2xl transition-colors">
+              <PaperclipIcon className="w-5 h-5 text-gray-400" />
+              <input
+                type="file"
+                ref={fileInputRef}
+                accept="image/*"
+                className="hidden"
+                onChange={handleImageUpload}
+              />
+            </label>
+            <Textarea
+              ref={textareaRef}
+              value={input}
+              onChange={handleInputChange}
+              onKeyDown={handleKeyPress}
+              placeholder="Message Talkie..."
+              className="min-h-[52px] max-h-[200px] py-3 bg-transparent border-none text-white focus-visible:ring-0 placeholder-gray-500 text-lg resize-none scrollbar-hide"
             />
-          </label>
-        </div>
-        <div
-          onMouseEnter={() => setShowTooltip(true)}
-          onMouseLeave={() => setShowTooltip(false)}
-          className="relative"
-        >
+          </div>
+
           <button
             onClick={handleSend}
             disabled={isLoading || (!input.trim() && !image)}
             className={`
-              p-2 rounded-xl transition-colors
-              ${
-                isLoading || (!input.trim() && !image)
-                  ? "bg-gray-500"
-                  : "bg-[#ae562f] hover:bg-[#a84b23]"
+              p-3.5 rounded-2xl transition-all duration-300
+              ${isLoading || (!input.trim() && !image)
+                ? "bg-white/5 text-gray-600"
+                : "bg-[#ae562f] text-white shadow-lg shadow-[#ae562f]/20 hover:scale-105 active:scale-95"
               }
             `}
           >
-            <ArrowUpIcon color="white" className="w-5 h-5" />
+            {isLoading ? (
+              <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+            ) : (
+              <ArrowUpIcon className="w-5 h-5" />
+            )}
           </button>
-          {showTooltip && (
-            <div className="flex items-center justify-center absolute w-32 h-8 -top-10 left-1/2 transform -translate-x-1/2 px-2 py-1 bg-black text-white text-xs rounded-md shadow-lg">
-              {isLoading || (!input.trim() && !image)
-                ? "Message is empty"
-                : "Send message"}
-            </div>
-          )}
         </div>
+
+        {!messagesExist && (
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="mt-6 flex flex-wrap justify-center gap-3"
+          >
+            {prompts.map((item, idx) => (
+              <button
+                key={idx}
+                onClick={() => setInput(item.prompt)}
+                className="glass px-4 py-2 rounded-xl text-sm font-medium text-gray-300 hover:text-white hover:bg-white/10 transition-all flex items-center space-x-2"
+              >
+                <item.icon className={`w-4 h-4 ${item.color}`} />
+                <span>{item.label}</span>
+              </button>
+            ))}
+          </motion.div>
+        )}
       </div>
-      {!messagesExist && (
-        <motion.div
-          variants={buttonVariant}
-          initial={"hidden"}
-          animate={"visible"}
-          className="fixed bottom-20 hidden md:flex space-x-4 self-center"
-        >
-          {buttons.map((button, index) => (
-            <button
-              onClick={() => {
-                setInput(button.textInput);
-                textareaRef.current?.focus();
-              }}
-              key={index}
-              className="flex items-center px-4 py-2 bg-[#393937] rounded-lg hover:bg-[#21211e] transition focus:outline-none"
-            >
-              <span className="flex items-center">
-                <button.icon className={`w-5 h-5 mr-2 ${button.color}`} />
-              </span>
-              <span className="text-white text-sm font-thin">
-                {button.label}
-              </span>
-            </button>
-          ))}
-        </motion.div>
-      )}
-    </>
+    </div>
   );
 };
 

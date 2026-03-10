@@ -1,38 +1,14 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Message } from "@/utils/types";
-import { GoogleGenerativeAI } from "@google/generative-ai";
 import { convertToBase64 } from "@/utils/helpers";
-
-const api = process.env.NEXT_PUBLIC_APIKEY;
-if (!api) {
-  console.error("API Key is missing");
-}
-
-const genAI = new GoogleGenerativeAI(api || "");
-const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 
 export const useChat = () => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [isLoading, setIsLoading] = useState(false);
-  const [chatInstance, setChatInstance] = useState<any>(null);
-
-  useEffect(() => {
-    const initializeChat = async () => {
-      const chat = await model.startChat({
-        history: [],
-        generationConfig: {
-          maxOutputTokens: 2000,
-        },
-      });
-      setChatInstance(chat);
-    };
-
-    initializeChat();
-  }, []);
+  const [selectedModel, setSelectedModel] = useState("llama-3.3-70b-versatile");
 
   const sendMessage = async (text: string, image: File | null) => {
     if (!text.trim() && !image) return;
-    if (!chatInstance && !image) return;
 
     setIsLoading(true);
 
@@ -44,47 +20,61 @@ export const useChat = () => {
         user: true,
       };
 
+      let imageData = null;
+
       if (image) {
-        const imagePreview = URL.createObjectURL(image);
-        userMessage.image = imagePreview;
+        const imageBase64 = await convertToBase64(image);
+        const [meta, data] = imageBase64.split(",");
+        const mimeType = meta.match(/:(.*?);/)?.[1] || "image/jpeg";
+
+        imageData = {
+          mimeType,
+          data,
+        };
+
+        userMessage.image = URL.createObjectURL(image);
       }
 
       setMessages((prev) => [...prev, userMessage]);
 
-      let response;
+      const history = messages.map((msg) => ({
+        role: msg.user ? "user" : "model",
+        content: msg.text || "",
+      }));
 
-      if (image) {
-        const imageBase64 = await convertToBase64(image);
-        const base64Data = imageBase64.split(",")[1];
+      const response = await fetch("/api/chat", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          messages: [...history, { role: "user", content: text }],
+          image: imageData,
+          modelId: selectedModel,
+        }),
+      });
 
-        const imagePart = {
-          inlineData: {
-            mimeType: image.type || "image/jpeg",
-            data: base64Data,
-          },
-        };
-
-        const result = await model.generateContent([text, imagePart]);
-        response = await result.response;
-      } else {
-        const result = await chatInstance.sendMessage(text);
-        response = await result.response;
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Failed to get response from AI");
       }
+
+      const data = await response.json();
 
       const aiResponse: Message = {
         id: userMessageId + 1,
-        text: response.text(),
+        text: data.text,
         user: false,
       };
 
       setMessages((prev) => [...prev, aiResponse]);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error sending message:", error);
       setMessages((prev) => [
         ...prev,
         {
           id: Date.now(),
-          text: "Sorry, there was an error processing your message.",
+          text: `Error: ${error.message || "An unexpected error occurred."}`,
           user: false,
         },
       ]);
@@ -93,9 +83,16 @@ export const useChat = () => {
     }
   };
 
+  const clearMessages = () => {
+    setMessages([]);
+  };
+
   return {
     messages,
     isLoading,
     sendMessage,
+    selectedModel,
+    setSelectedModel,
+    clearMessages,
   };
 };
