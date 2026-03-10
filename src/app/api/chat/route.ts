@@ -3,9 +3,9 @@ import { OpenAI } from "openai";
 import { Groq } from "groq-sdk";
 import { NextResponse } from "next/server";
 
-const googleKey = process.env.GEMINI_API_KEY;
-const openaiKey = process.env.OPENAI_API_KEY;
-const groqKey = process.env.GROQ_API_KEY;
+const googleKey = process.env.NEXT_PUBLIC_GEMINI_API_KEY;
+const openaiKey = process.env.NEXT_PUBLIC_OPENAI_API_KEY;
+const groqKey = process.env.NEXT_PUBLIC_GROQ_API_KEY;
 
 const genAI = googleKey ? new GoogleGenerativeAI(googleKey) : null;
 const openai = openaiKey ? new OpenAI({ apiKey: openaiKey }) : null;
@@ -19,7 +19,7 @@ export async function POST(req: Request) {
         // Handle Google Models
         if (modelName.startsWith("gemini")) {
             if (!genAI) {
-                return NextResponse.json({ error: "GEMINI_API_KEY is not configured." }, { status: 500 });
+                return NextResponse.json({ error: "NEXT_PUBLIC_GEMINI_API_KEY is not configured." }, { status: 500 });
             }
 
             const model = genAI.getGenerativeModel({ model: modelName });
@@ -51,7 +51,7 @@ export async function POST(req: Request) {
         // Handle OpenAI Models
         if (modelName.startsWith("gpt")) {
             if (!openai) {
-                return NextResponse.json({ error: "OPENAI_API_KEY is not configured." }, { status: 500 });
+                return NextResponse.json({ error: "NEXT_PUBLIC_OPENAI_API_KEY is not configured." }, { status: 500 });
             }
 
             const openaiMessages = messages.map((msg: any) => ({
@@ -85,7 +85,7 @@ export async function POST(req: Request) {
         // Handle Groq Models
         if (modelName.includes("llama")) {
             if (!groq) {
-                return NextResponse.json({ error: "GROQ_API_KEY is not configured." }, { status: 500 });
+                return NextResponse.json({ error: "NEXT_PUBLIC_GROQ_API_KEY is not configured." }, { status: 500 });
             }
 
             const groqMessages = messages.map((msg: any) => ({

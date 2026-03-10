@@ -45,7 +45,7 @@ const ImageModal: React.FC<{
             fill
             sizes="90vw"
             priority
-            onClick={(e) => e.stopPropagation()}
+            onClick={(e: React.MouseEvent) => e.stopPropagation()}
           />
         </div>
       </div>
