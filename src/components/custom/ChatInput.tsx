@@ -87,21 +87,22 @@ const ChatInput: React.FC<ChatInputProps> = ({
               initial={{ opacity: 0, y: 20, scale: 0.95 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: 20, scale: 0.95 }}
-              className="mb-4 ml-4"
             >
-              <div className="relative w-32 h-32 glass rounded-2xl overflow-hidden group border border-white/20">
-                <Image
-                  src={imagePreview}
-                  alt="Preview"
-                  className="object-cover"
-                  fill
-                />
-                <button
-                  onClick={removeImage}
-                  className="absolute top-1 right-1 p-1 bg-black/60 hover:bg-red-500/80 rounded-full transition-colors backdrop-blur-md"
-                >
-                  <XIcon className="w-4 h-4 text-white" />
-                </button>
+              <div className="mb-4 ml-4">
+                <div className="relative w-32 h-32 glass rounded-2xl overflow-hidden group border border-white/20">
+                  <Image
+                    src={imagePreview}
+                    alt="Preview"
+                    className="object-cover"
+                    fill
+                  />
+                  <button
+                    onClick={removeImage}
+                    className="absolute top-1 right-1 p-1 bg-black/60 hover:bg-red-500/80 rounded-full transition-colors backdrop-blur-md"
+                  >
+                    <XIcon className="w-4 h-4 text-white" />
+                  </button>
+                </div>
               </div>
             </motion.div>
           )}
@@ -152,22 +153,23 @@ const ChatInput: React.FC<ChatInputProps> = ({
           <motion.div
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
-            className="mt-6 flex flex-wrap justify-center gap-3"
           >
-            {prompts.map((item, idx) => (
-              <button
-                key={idx}
-                onClick={() => setInput(item.prompt)}
-                className="glass px-4 py-2 rounded-xl text-sm font-medium text-gray-300 hover:text-white hover:bg-white/10 transition-all flex items-center space-x-2"
-              >
-                <item.icon className={`w-4 h-4 ${item.color}`} />
-                <span>{item.label}</span>
-              </button>
-            ))}
+            <div className="mt-6 flex flex-wrap justify-center gap-3">
+              {prompts.map((item, idx) => (
+                <button
+                  key={idx}
+                  onClick={() => setInput(item.prompt)}
+                  className="glass px-4 py-2 rounded-xl text-sm font-medium text-gray-300 hover:text-white hover:bg-white/10 transition-all flex items-center space-x-2"
+                >
+                  <item.icon className={`w-4 h-4 ${item.color}`} />
+                  <span>{item.label}</span>
+                </button>
+              ))}
+            </div>
           </motion.div>
         )}
       </div>
-    </div>
+    </div >
   );
 };
 
